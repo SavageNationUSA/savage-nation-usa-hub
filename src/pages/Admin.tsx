@@ -45,7 +45,7 @@ type ProductFormValues = {
   name: string;
   description: string;
   price: string;
-  image_url: string;
+  image?: FileList;
 };
 
 const fetchProducts = async (): Promise<Product[]> => {
@@ -60,17 +60,30 @@ const fetchProducts = async (): Promise<Product[]> => {
 const CreateProductDialog = () => {
   const [open, setOpen] = useState(false);
   const form = useForm<ProductFormValues>({
-    defaultValues: { name: "", description: "", price: "", image_url: "" },
+    defaultValues: { name: "", description: "", price: "", image: undefined },
   });
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
     mutationFn: async (values: ProductFormValues) => {
+      let imageUrl: string | null = null;
+      if (values.image && values.image[0]) {
+        const file = values.image[0];
+        const filePath = `${Date.now()}-${file.name}`;
+        const { error: uploadError } = await supabase!
+          .storage.from("product-images")
+          .upload(filePath, file);
+        if (uploadError) throw uploadError;
+        const {
+          data: { publicUrl },
+        } = supabase!.storage.from("product-images").getPublicUrl(filePath);
+        imageUrl = publicUrl;
+      }
       const { error } = await supabase!.from("products").insert({
         name: values.name,
         description: values.description,
         price: values.price ? Number(values.price) : null,
-        image_url: values.image_url,
+        image_url: imageUrl,
       });
       if (error) throw error;
     },
@@ -143,12 +156,16 @@ const CreateProductDialog = () => {
             />
             <FormField
               control={form.control}
-              name="image_url"
+              name="image"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Image URL</FormLabel>
+                  <FormLabel>Image</FormLabel>
                   <FormControl>
-                    <Input {...field} />
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => field.onChange(e.target.files)}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -173,7 +190,7 @@ const EditProductDialog = ({ product }: { product: Product }) => {
       name: product.name ?? "",
       description: product.description ?? "",
       price: product.price?.toString() ?? "",
-      image_url: product.image_url ?? "",
+      image: undefined,
     },
   });
   const queryClient = useQueryClient();
@@ -183,19 +200,32 @@ const EditProductDialog = ({ product }: { product: Product }) => {
       name: product.name ?? "",
       description: product.description ?? "",
       price: product.price?.toString() ?? "",
-      image_url: product.image_url ?? "",
+      image: undefined,
     });
   }, [product, form]);
 
   const mutation = useMutation({
     mutationFn: async (values: ProductFormValues) => {
+      let imageUrl = product.image_url;
+      if (values.image && values.image[0]) {
+        const file = values.image[0];
+        const filePath = `${Date.now()}-${file.name}`;
+        const { error: uploadError } = await supabase!
+          .storage.from("product-images")
+          .upload(filePath, file);
+        if (uploadError) throw uploadError;
+        const {
+          data: { publicUrl },
+        } = supabase!.storage.from("product-images").getPublicUrl(filePath);
+        imageUrl = publicUrl;
+      }
       const { error } = await supabase!
         .from("products")
         .update({
           name: values.name,
           description: values.description,
           price: values.price ? Number(values.price) : null,
-          image_url: values.image_url,
+          image_url: imageUrl,
         })
         .eq("id", product.id);
       if (error) throw error;
@@ -270,12 +300,16 @@ const EditProductDialog = ({ product }: { product: Product }) => {
             />
             <FormField
               control={form.control}
-              name="image_url"
+              name="image"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Image URL</FormLabel>
+                  <FormLabel>Image</FormLabel>
                   <FormControl>
-                    <Input {...field} />
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => field.onChange(e.target.files)}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -334,6 +368,7 @@ const Admin = () => {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead>Image</TableHead>
                 <TableHead>Name</TableHead>
                 <TableHead>Description</TableHead>
                 <TableHead>Price</TableHead>
@@ -343,6 +378,15 @@ const Admin = () => {
             <TableBody>
               {data?.map((product) => (
                 <TableRow key={product.id}>
+                  <TableCell>
+                    {product.image_url ? (
+                      <img
+                        src={product.image_url}
+                        alt={product.name}
+                        className="h-16 w-16 object-cover rounded"
+                      />
+                    ) : null}
+                  </TableCell>
                   <TableCell className="font-medium">{product.name}</TableCell>
                   <TableCell>{product.description}</TableCell>
                   <TableCell>

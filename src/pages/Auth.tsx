@@ -23,9 +23,9 @@ const Auth = () => {
     const action = mode === "signin" ? signIn : signUp;
     const { error } = await action(email, password);
     setLoading(false);
-    if (error) {
-      toast({ title: "Error", description: error, variant: "destructive" as any });
-    } else {
+      if (error) {
+        toast({ title: "Error", description: error, variant: "destructive" });
+      } else {
       toast({ title: "Success", description: mode === "signin" ? "Signed in" : "Account created. Check your email if confirmation is required." });
     }
   };

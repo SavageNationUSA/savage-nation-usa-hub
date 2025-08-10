@@ -5,7 +5,7 @@ type SEOProps = {
   title: string;
   description?: string;
   path?: string;
-  structuredData?: Record<string, any>;
+  structuredData?: Record<string, unknown>;
 };
 
 export const SEO = ({ title, description, path, structuredData }: SEOProps) => {

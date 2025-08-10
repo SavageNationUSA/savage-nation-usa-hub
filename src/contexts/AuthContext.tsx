@@ -45,8 +45,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const isAdmin = useMemo(() => {
-    const roles = (user?.app_metadata as any)?.roles as string[] | undefined;
-    const metaRole = (user?.user_metadata as any)?.role as string | undefined;
+    const roles = (user?.app_metadata as { roles?: string[] } | undefined)?.roles;
+    const metaRole = (user?.user_metadata as { role?: string } | undefined)?.role;
     return roles?.includes("admin") || metaRole === "admin" || false;
   }, [user]);
 

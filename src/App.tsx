@@ -18,34 +18,49 @@ import Charities from "./pages/Charities";
 import Mission from "./pages/Mission";
 import Toolshed from "./pages/Toolshed";
 import WeeklyBlog from "./pages/WeeklyBlog";
+import Auth from "./pages/Auth";
+import Admin from "./pages/Admin";
+import { AuthProvider } from "./contexts/AuthContext";
+import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Navbar />
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/store" element={<Store />} />
-          <Route path="/videos" element={<Videos />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/contact" element={<Contact />} />
-          <Route path="/gallery" element={<Gallery />} />
-          <Route path="/faq" element={<Faq />} />
-          <Route path="/story" element={<Story />} />
-          <Route path="/charities" element={<Charities />} />
-          <Route path="/mission" element={<Mission />} />
-          <Route path="/toolshed" element={<Toolshed />} />
-          <Route path="/weekly-blog" element={<WeeklyBlog />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-        <Footer />
-      </BrowserRouter>
+      <AuthProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Navbar />
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/store" element={<Store />} />
+            <Route path="/videos" element={<Videos />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/gallery" element={<Gallery />} />
+            <Route path="/faq" element={<Faq />} />
+            <Route path="/story" element={<Story />} />
+            <Route path="/charities" element={<Charities />} />
+            <Route path="/mission" element={<Mission />} />
+            <Route path="/toolshed" element={<Toolshed />} />
+            <Route path="/weekly-blog" element={<WeeklyBlog />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute requireAdmin>
+                  <Admin />
+                </ProtectedRoute>
+              }
+            />
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+          <Footer />
+        </BrowserRouter>
+      </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );

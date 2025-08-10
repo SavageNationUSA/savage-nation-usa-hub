@@ -2,6 +2,16 @@ import { Link, NavLink } from "react-router-dom";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Flag, Menu } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const navItems = [
   { to: "/store", label: "Store" },
@@ -19,6 +29,7 @@ const navItems = [
 
 export const Navbar = () => {
   const [open, setOpen] = useState(false);
+  const { user, isAdmin, enabled, signOut } = useAuth();
 
   return (
     <header className="sticky top-0 z-50 border-b bg-background/70 backdrop-blur supports-[backdrop-filter]:bg-background/70">
@@ -38,9 +49,37 @@ export const Navbar = () => {
               {item.label}
             </NavLink>
           ))}
+          {isAdmin && (
+            <NavLink to="/admin" className={({ isActive }) => `text-sm transition-colors ${isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"}`}>
+              Admin
+            </NavLink>
+          )}
           <Button asChild variant="hero" size="lg">
             <Link to="/store">Shop Now</Link>
           </Button>
+
+          {/* Auth controls */}
+          {enabled && user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button aria-label="Account" className="rounded-full outline-none">
+                  <Avatar>
+                    <AvatarFallback>{user.email?.[0]?.toUpperCase() ?? "U"}</AvatarFallback>
+                  </Avatar>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>{user.email}</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {isAdmin && <DropdownMenuItem asChild><Link to="/admin">Go to Admin</Link></DropdownMenuItem>}
+                <DropdownMenuItem onClick={() => signOut()}>Sign out</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <Button asChild variant="outline">
+              <Link to="/auth">Sign in</Link>
+            </Button>
+          )}
         </div>
 
         <Button variant="outline" size="icon" className="lg:hidden" aria-label="Open menu" onClick={() => setOpen((v) => !v)}>
@@ -61,9 +100,21 @@ export const Navbar = () => {
                 {item.label}
               </NavLink>
             ))}
+            {isAdmin && (
+              <NavLink to="/admin" onClick={() => setOpen(false)} className={({ isActive }) => `text-sm ${isActive ? "text-primary" : "text-foreground"}`}>
+                Admin
+              </NavLink>
+            )}
             <Button asChild variant="hero" size="lg" onClick={() => setOpen(false)}>
               <Link to="/store">Shop Now</Link>
             </Button>
+            {enabled && user ? (
+              <Button variant="outline" onClick={() => { signOut(); setOpen(false); }}>Sign out</Button>
+            ) : (
+              <Button asChild variant="outline" onClick={() => setOpen(false)}>
+                <Link to="/auth">Sign in</Link>
+              </Button>
+            )}
           </div>
         </div>
       )}

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { SEO } from "@/components/SEO";
-import { supabase, hasSupabase } from "@/lib/supabaseClient";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
 import {
   Dialog,
@@ -49,7 +49,6 @@ type ProductFormValues = {
 };
 
 const fetchProducts = async (): Promise<Product[]> => {
-  if (!supabase) return [];
   const { data, error } = await supabase
     .from("products")
     .select("*")
@@ -67,7 +66,6 @@ const CreateProductDialog = () => {
 
   const mutation = useMutation({
     mutationFn: async (values: ProductFormValues) => {
-      if (!supabase) throw new Error("Supabase client is not available.");
       let imageUrl: string | null = null;
       if (values.image && values.image[0]) {
         const file = values.image[0];
@@ -208,7 +206,6 @@ const EditProductDialog = ({ product }: { product: Product }) => {
 
   const mutation = useMutation({
     mutationFn: async (values: ProductFormValues) => {
-      if (!supabase) throw new Error("Supabase client is not available.");
       let imageUrl = product.image_url;
       if (values.image && values.image[0]) {
         const file = values.image[0];
@@ -334,23 +331,11 @@ const Admin = () => {
   const { data, isLoading } = useQuery({
     queryKey: ["products"],
     queryFn: fetchProducts,
-    enabled: hasSupabase,
   });
-
-  if (!hasSupabase) {
-    return (
-      <div className="container mx-auto py-12">
-        <p className="text-center text-red-500">
-          Supabase not configured. Please check your environment variables.
-        </p>
-      </div>
-    );
-  }
 
   const queryClient = useQueryClient();
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      if (!supabase) throw new Error("Supabase client is not available.");
       const { error } = await supabase.from("products").delete().eq("id", id);
       if (error) throw error;
     },

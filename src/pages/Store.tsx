@@ -14,7 +14,7 @@ const fetchProducts = async (): Promise<Product[]> => {
 };
 
 const Store = () => {
-  const { data, isLoading, error } = useQuery<Product[]>(["products"], fetchProducts);
+  const { data, isLoading, error } = useQuery<Product[]>({ queryKey: ["products"], queryFn: fetchProducts });
 
   return (
     <main className="container mx-auto py-10">

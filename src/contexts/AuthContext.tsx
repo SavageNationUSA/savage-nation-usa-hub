@@ -1,7 +1,7 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 import type { Session, User } from "@supabase/supabase-js";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, hasSupabase } from "@/lib/supabaseClient";
 
 export type AuthContextType = {
   enabled: boolean;
@@ -22,8 +22,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
 
+  // Handle disabled state for Supabase
+  if (!hasSupabase) {
+    const value: AuthContextType = {
+      enabled: false,
+      loading: false,
+      session: null,
+      user: null,
+      isAdmin: false,
+      signIn: async () => ({ error: "Supabase not configured" }),
+      signUp: async () => ({ error: "Supabase not configured" }),
+      signOut: async () => {},
+    };
+    return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  }
+
   // Initialize auth session
   useEffect(() => {
+    if (!supabase) return;
     const init = async () => {
       const { data } = await supabase.auth.getSession();
       setSession(data.session ?? null);
@@ -44,24 +60,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
   }, []);
 
-  // Determine admin role:
-  // 1) Prefer roles from the new user_roles table
-  // 2) Fallback to any legacy metadata flags if present
+  // Determine admin role
   useEffect(() => {
-    let cancelled = false;
+    if (!supabase || !user) {
+      setIsAdmin(false);
+      return;
+    }
 
+    let cancelled = false;
     const checkAdmin = async () => {
-      // Fallback from legacy metadata (kept for compatibility)
       const roles = (user?.app_metadata as { roles?: string[] } | undefined)?.roles;
       const metaRole = (user?.user_metadata as { role?: string } | undefined)?.role;
       const legacyIsAdmin = !!(roles?.includes("admin") || metaRole === "admin");
 
-      if (!user) {
-        if (!cancelled) setIsAdmin(false);
-        return;
-      }
-
-      // Primary: check user_roles table
       const { data, error } = await supabase
         .from("user_roles")
         .select("role")
@@ -92,14 +103,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     user,
     isAdmin,
     signIn: async (email, password) => {
+      if (!supabase) return { error: "Supabase not configured" };
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       return { error: error?.message };
     },
     signUp: async (email, password) => {
+      if (!supabase) return { error: "Supabase not configured" };
       const { error } = await supabase.auth.signUp({ email, password });
       return { error: error?.message };
     },
     signOut: async () => {
+      if (!supabase) return;
       await supabase.auth.signOut();
     },
   };

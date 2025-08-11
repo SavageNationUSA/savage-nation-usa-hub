@@ -14,7 +14,13 @@ const SUPABASE_ANON_KEY = window.__SUPABASE_ANON_KEY__ || "";
 
 let client: SupabaseClient | null = null;
 if (SUPABASE_URL && SUPABASE_ANON_KEY) {
-  client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: {
+      storage: localStorage,
+      persistSession: true,
+      autoRefreshToken: true,
+    },
+  });
 }
 
 export const supabase = client;

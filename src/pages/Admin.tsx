@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { SEO } from "@/components/SEO";
-import { supabase } from "@/lib/supabaseClient";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
 import {
   Dialog,
@@ -49,7 +49,7 @@ type ProductFormValues = {
 };
 
 const fetchProducts = async (): Promise<Product[]> => {
-  const { data, error } = await supabase!
+  const { data, error } = await supabase
     .from("products")
     .select("*")
     .order("created_at", { ascending: false });
@@ -70,16 +70,16 @@ const CreateProductDialog = () => {
       if (values.image && values.image[0]) {
         const file = values.image[0];
         const filePath = `${Date.now()}-${file.name}`;
-        const { error: uploadError } = await supabase!
+        const { error: uploadError } = await supabase
           .storage.from("product-images")
           .upload(filePath, file);
         if (uploadError) throw uploadError;
         const {
           data: { publicUrl },
-        } = supabase!.storage.from("product-images").getPublicUrl(filePath);
+        } = supabase.storage.from("product-images").getPublicUrl(filePath);
         imageUrl = publicUrl;
       }
-      const { error } = await supabase!.from("products").insert({
+      const { error } = await supabase.from("products").insert({
         name: values.name,
         description: values.description,
         price: values.price ? Number(values.price) : null,
@@ -210,16 +210,16 @@ const EditProductDialog = ({ product }: { product: Product }) => {
       if (values.image && values.image[0]) {
         const file = values.image[0];
         const filePath = `${Date.now()}-${file.name}`;
-        const { error: uploadError } = await supabase!
+        const { error: uploadError } = await supabase
           .storage.from("product-images")
           .upload(filePath, file);
         if (uploadError) throw uploadError;
         const {
           data: { publicUrl },
-        } = supabase!.storage.from("product-images").getPublicUrl(filePath);
+        } = supabase.storage.from("product-images").getPublicUrl(filePath);
         imageUrl = publicUrl;
       }
-      const { error } = await supabase!
+      const { error } = await supabase
         .from("products")
         .update({
           name: values.name,
@@ -336,7 +336,7 @@ const Admin = () => {
   const queryClient = useQueryClient();
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase!.from("products").delete().eq("id", id);
+      const { error } = await supabase.from("products").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -413,4 +413,3 @@ const Admin = () => {
 };
 
 export default Admin;
-

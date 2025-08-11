@@ -1,6 +1,7 @@
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+
+import { createContext, useContext, useEffect, useState } from "react";
 import type { Session, User } from "@supabase/supabase-js";
-import { supabase, hasSupabase } from "@/lib/supabaseClient";
+import { supabase } from "@/integrations/supabase/client";
 
 export type AuthContextType = {
   enabled: boolean;
@@ -19,56 +20,87 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
 
+  // Initialize auth session
   useEffect(() => {
-    if (!hasSupabase) {
-      setLoading(false);
-      return;
-    }
-
     const init = async () => {
-      const { data } = await supabase!.auth.getSession();
+      const { data } = await supabase.auth.getSession();
       setSession(data.session ?? null);
       setUser(data.session?.user ?? null);
       setLoading(false);
     };
     init();
 
-    const { data: sub } = supabase!.auth.onAuthStateChange((_event, newSession) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, newSession) => {
       setSession(newSession);
       setUser(newSession?.user ?? null);
     });
 
     return () => {
-      sub.subscription.unsubscribe();
+      subscription.unsubscribe();
     };
   }, []);
 
-  const isAdmin = useMemo(() => {
-    const roles = (user?.app_metadata as { roles?: string[] } | undefined)?.roles;
-    const metaRole = (user?.user_metadata as { role?: string } | undefined)?.role;
-    return roles?.includes("admin") || metaRole === "admin" || false;
+  // Determine admin role:
+  // 1) Prefer roles from the new user_roles table
+  // 2) Fallback to any legacy metadata flags if present
+  useEffect(() => {
+    let cancelled = false;
+
+    const checkAdmin = async () => {
+      // Fallback from legacy metadata (kept for compatibility)
+      const roles = (user?.app_metadata as { roles?: string[] } | undefined)?.roles;
+      const metaRole = (user?.user_metadata as { role?: string } | undefined)?.role;
+      const legacyIsAdmin = !!(roles?.includes("admin") || metaRole === "admin");
+
+      if (!user) {
+        if (!cancelled) setIsAdmin(false);
+        return;
+      }
+
+      // Primary: check user_roles table
+      const { data, error } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .eq("role", "admin")
+        .maybeSingle();
+
+      if (cancelled) return;
+
+      if (error) {
+        console.log("[AuthContext] Failed to fetch user_roles:", error);
+        setIsAdmin(legacyIsAdmin);
+        return;
+      }
+      setIsAdmin(!!data || legacyIsAdmin);
+    };
+
+    checkAdmin();
+    return () => {
+      cancelled = true;
+    };
   }, [user]);
 
   const value: AuthContextType = {
-    enabled: hasSupabase,
+    enabled: true,
     loading,
     session,
     user,
     isAdmin,
     signIn: async (email, password) => {
-      if (!hasSupabase) return { error: "Supabase not connected" };
-      const { error } = await supabase!.auth.signInWithPassword({ email, password });
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
       return { error: error?.message };
     },
     signUp: async (email, password) => {
-      if (!hasSupabase) return { error: "Supabase not connected" };
-      const { error } = await supabase!.auth.signUp({ email, password });
+      const { error } = await supabase.auth.signUp({ email, password });
       return { error: error?.message };
     },
     signOut: async () => {
-      if (!hasSupabase) return;
-      await supabase!.auth.signOut();
+      await supabase.auth.signOut();
     },
   };
 

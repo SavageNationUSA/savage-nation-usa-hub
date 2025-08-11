@@ -1,11 +1,12 @@
+
 import { SEO } from "@/components/SEO";
 import { ProductCard, type Product } from "@/components/ProductCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabaseClient";
+import { supabase } from "@/integrations/supabase/client";
 
 const fetchProducts = async (): Promise<Product[]> => {
-  const { data, error } = await supabase!
+  const { data, error } = await supabase
     .from("products")
     .select("*")
     .order("created_at", { ascending: false });

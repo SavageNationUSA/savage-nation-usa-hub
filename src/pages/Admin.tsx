@@ -34,6 +34,8 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { PageEditor } from "@/components/admin/PageEditor";
 
 // Product Types
 type Product = {
@@ -1236,38 +1238,53 @@ const PagesManager = () => {
 
 const Admin = () => {
   return (
-    <>
-      <SEO
-        title="Admin — Savage Nation USA"
-        description="Admin dashboard to manage Savage Nation USA."
-      />
-      <main className="container mx-auto py-12">
-        <Tabs defaultValue="products">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="products">Products</TabsTrigger>
-            <TabsTrigger value="blogs">Blogs</TabsTrigger>
-            <TabsTrigger value="videos">Videos</TabsTrigger>
-            <TabsTrigger value="pages">Pages</TabsTrigger>
-            <TabsTrigger value="faq">FAQ</TabsTrigger>
-          </TabsList>
-          <TabsContent value="products">
-            <ProductsManager />
-          </TabsContent>
-          <TabsContent value="blogs">
-            <BlogsManager />
-          </TabsContent>
-          <TabsContent value="videos">
-            <VideosManager />
-          </TabsContent>
-          <TabsContent value="pages">
-            <PagesManager />
-          </TabsContent>
-          <TabsContent value="faq">
-            <FaqsManager />
-          </TabsContent>
-        </Tabs>
-      </main>
-    </>
+    <ProtectedRoute requireAdmin>
+      <>
+        <SEO
+          title="Admin — Savage Nation USA"
+          description="Admin dashboard to manage Savage Nation USA."
+        />
+        <main className="container mx-auto py-12">
+          <h1 className="text-4xl font-bold mb-6">Admin Dashboard</h1>
+          <Tabs defaultValue="products">
+            <TabsList className="grid w-full grid-cols-3 lg:grid-cols-8 gap-1">
+              <TabsTrigger value="products">Products</TabsTrigger>
+              <TabsTrigger value="blogs">Blogs</TabsTrigger>
+              <TabsTrigger value="videos">Videos</TabsTrigger>
+              <TabsTrigger value="pages">Pages</TabsTrigger>
+              <TabsTrigger value="faq">FAQ</TabsTrigger>
+              <TabsTrigger value="about">About</TabsTrigger>
+              <TabsTrigger value="contact">Contact</TabsTrigger>
+              <TabsTrigger value="gallery">Gallery</TabsTrigger>
+            </TabsList>
+            <TabsContent value="products">
+              <ProductsManager />
+            </TabsContent>
+            <TabsContent value="blogs">
+              <BlogsManager />
+            </TabsContent>
+            <TabsContent value="videos">
+              <VideosManager />
+            </TabsContent>
+            <TabsContent value="pages">
+              <PagesManager />
+            </TabsContent>
+            <TabsContent value="faq">
+              <FaqsManager />
+            </TabsContent>
+            <TabsContent value="about">
+              <PageEditor slug="about" title="About Us" />
+            </TabsContent>
+            <TabsContent value="contact">
+              <PageEditor slug="contact" title="Contact Us" />
+            </TabsContent>
+            <TabsContent value="gallery">
+              <PageEditor slug="gallery" title="Gallery" />
+            </TabsContent>
+          </Tabs>
+        </main>
+      </>
+    </ProtectedRoute>
   );
 };
 

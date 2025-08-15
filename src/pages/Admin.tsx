@@ -36,6 +36,7 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { PageEditor } from "@/components/admin/PageEditor";
+import { ToolshedManager } from "@/components/admin/ToolshedManager";
 
 // Product Types
 type Product = {
@@ -1270,12 +1271,13 @@ const Admin = () => {
         <main className="container mx-auto py-12">
           <h1 className="text-4xl font-bold mb-6">Admin Dashboard</h1>
           <Tabs defaultValue="products">
-            <TabsList className="grid w-full grid-cols-3 lg:grid-cols-8 gap-1">
+            <TabsList className="grid w-full grid-cols-3 lg:grid-cols-9 gap-1">
               <TabsTrigger value="products">Products</TabsTrigger>
               <TabsTrigger value="blogs">Blogs</TabsTrigger>
               <TabsTrigger value="videos">Videos</TabsTrigger>
               <TabsTrigger value="pages">Pages</TabsTrigger>
               <TabsTrigger value="faq">FAQ</TabsTrigger>
+              <TabsTrigger value="toolshed">Toolshed</TabsTrigger>
               <TabsTrigger value="about">About</TabsTrigger>
               <TabsTrigger value="contact">Contact</TabsTrigger>
               <TabsTrigger value="gallery">Gallery</TabsTrigger>
@@ -1294,6 +1296,9 @@ const Admin = () => {
             </TabsContent>
             <TabsContent value="faq">
               <FaqsManager />
+            </TabsContent>
+            <TabsContent value="toolshed">
+              <ToolshedManager />
             </TabsContent>
             <TabsContent value="about">
               <PageEditor slug="about" title="About Us" />

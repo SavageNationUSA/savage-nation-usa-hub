@@ -122,6 +122,54 @@ export type Database = {
         }
         Relationships: []
       }
+      toolshed_resources: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          display_order: number | null
+          download_count: number
+          featured: boolean
+          file_url: string | null
+          id: string
+          tags: Json | null
+          title: string
+          type: string
+          updated_at: string
+          url: string | null
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          download_count?: number
+          featured?: boolean
+          file_url?: string | null
+          id?: string
+          tags?: Json | null
+          title: string
+          type: string
+          updated_at?: string
+          url?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          download_count?: number
+          featured?: boolean
+          file_url?: string | null
+          id?: string
+          tags?: Json | null
+          title?: string
+          type?: string
+          updated_at?: string
+          url?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string

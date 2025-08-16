@@ -31,12 +31,24 @@ const fetchPublishedVideos = async (): Promise<Video[]> => {
 const getYouTubeEmbedUrl = (url: string): string | null => {
   try {
     const urlObj = new URL(url);
+    
+    // Handle standard YouTube watch URLs
     if (urlObj.hostname === "www.youtube.com" && urlObj.pathname === "/watch") {
       const videoId = urlObj.searchParams.get("v");
       if (videoId) {
         return `https://www.youtube.com/embed/${videoId}`;
       }
     }
+    
+    // Handle YouTube Shorts URLs
+    if ((urlObj.hostname === "www.youtube.com" || urlObj.hostname === "youtube.com") && urlObj.pathname.startsWith("/shorts/")) {
+      const videoId = urlObj.pathname.split("/shorts/")[1]?.split("?")[0];
+      if (videoId) {
+        return `https://www.youtube.com/embed/${videoId}`;
+      }
+    }
+    
+    // Handle youtu.be URLs
     if (urlObj.hostname === "youtu.be") {
         const videoId = urlObj.pathname.slice(1);
         if (videoId) {

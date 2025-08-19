@@ -37,6 +37,7 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { PageEditor } from "@/components/admin/PageEditor";
+import { formatCurrency, formatDate, formatDateTime } from "@/lib/utils";
 import {
   productFormSchema,
   blogFormSchema,
@@ -443,7 +444,7 @@ const EditProductDialog = ({ product }: { product: Product }) => {
 };
 
 const ProductsManager = () => {
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError } = useQuery({
     queryKey: ["products"],
     queryFn: fetchProducts,
   });
@@ -474,6 +475,8 @@ const ProductsManager = () => {
       </div>
       {isLoading ? (
         <p className="text-muted-foreground">Loading...</p>
+      ) : isError ? (
+        <p className="text-red-600">Failed to load products.</p>
       ) : (
         <Table>
           <TableHeader>
@@ -500,7 +503,7 @@ const ProductsManager = () => {
                 <TableCell className="font-medium">{product.name}</TableCell>
                 <TableCell>{product.description}</TableCell>
                 <TableCell>
-                  {product.price != null ? `$${product.price}` : ""}
+                  {product.price != null ? formatCurrency(product.price) : ""}
                 </TableCell>
                 <TableCell className="text-right space-x-2">
                   <EditProductDialog product={product} />
@@ -731,7 +734,7 @@ const EditBlogDialog = ({ blog }: { blog: Blog }) => {
 };
 
 const BlogsManager = () => {
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError } = useQuery({
     queryKey: ["blogs"],
     queryFn: fetchBlogs,
   });
@@ -762,6 +765,8 @@ const BlogsManager = () => {
       </div>
       {isLoading ? (
         <p className="text-muted-foreground">Loading...</p>
+      ) : isError ? (
+        <p className="text-red-600">Failed to load blog posts.</p>
       ) : (
         <Table>
           <TableHeader>
@@ -782,7 +787,7 @@ const BlogsManager = () => {
                   </Badge>
                 </TableCell>
                 <TableCell>
-                  {new Date(blog.created_at).toLocaleDateString()}
+                  {formatDate(blog.created_at)}
                 </TableCell>
                 <TableCell className="text-right space-x-2">
                   <EditBlogDialog blog={blog} />
@@ -1041,7 +1046,7 @@ const EditVideoDialog = ({ video }: { video: Video }) => {
 };
 
 const VideosManager = () => {
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError } = useQuery({
     queryKey: ["videos"],
     queryFn: fetchVideos,
   });
@@ -1072,6 +1077,8 @@ const VideosManager = () => {
       </div>
       {isLoading ? (
         <p className="text-muted-foreground">Loading...</p>
+      ) : isError ? (
+        <p className="text-red-600">Failed to load videos.</p>
       ) : (
         <Table>
           <TableHeader>
@@ -1209,7 +1216,7 @@ const EditPageDialog = ({ page }: { page: Page }) => {
 };
 
 const PagesManager = () => {
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError } = useQuery({
     queryKey: ["pages"],
     queryFn: fetchPages,
   });
@@ -1221,6 +1228,8 @@ const PagesManager = () => {
       </div>
       {isLoading ? (
         <p className="text-muted-foreground">Loading...</p>
+      ) : isError ? (
+        <p className="text-red-600">Failed to load pages.</p>
       ) : (
         <Table>
           <TableHeader>
@@ -1237,7 +1246,7 @@ const PagesManager = () => {
                 <TableCell className="font-medium">{page.title}</TableCell>
                 <TableCell className="font-mono text-xs">/{page.slug}</TableCell>
                 <TableCell>
-                  {new Date(page.updated_at).toLocaleString()}
+                  {formatDateTime(page.updated_at)}
                 </TableCell>
                 <TableCell className="text-right space-x-2">
                   <EditPageDialog page={page} />
@@ -1512,7 +1521,7 @@ const EditFaqDialog = ({ faq }: { faq: Faq }) => {
 };
 
 const FaqsManager = () => {
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError } = useQuery({
     queryKey: ["faqs"],
     queryFn: fetchFaqs,
   });
@@ -1543,6 +1552,8 @@ const FaqsManager = () => {
       </div>
       {isLoading ? (
         <p className="text-muted-foreground">Loading...</p>
+      ) : isError ? (
+        <p className="text-red-600">Failed to load FAQs.</p>
       ) : (
         <Table>
           <TableHeader>

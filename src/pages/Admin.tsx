@@ -34,6 +34,8 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import { CrudTable } from "@/components/admin/CrudTable";
+import { useOptimisticDelete } from "@/hooks/useOptimisticDelete";
 
 // Product Types
 type Product = {
@@ -436,76 +438,51 @@ const ProductsManager = () => {
     queryFn: fetchProducts,
   });
 
-  const queryClient = useQueryClient();
-  const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
+  const deleteMutation = useOptimisticDelete<Product>({
+    queryKey: ["products"],
+    deleteFn: async (id: string) => {
       const { error } = await supabase.from("products").delete().eq("id", id);
       if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["products"] });
       toast({ title: "Product deleted" });
     },
-    onError: (err: unknown) =>
-      toast({
-        title: "Error",
-        description: err instanceof Error ? err.message : String(err),
-        variant: "destructive",
-      }),
   });
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-semibold tracking-tight">Products</h1>
-        <CreateProductDialog />
-      </div>
-      {isLoading ? (
-        <p className="text-muted-foreground">Loading...</p>
-      ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Image</TableHead>
-              <TableHead>Name</TableHead>
-              <TableHead>Description</TableHead>
-              <TableHead>Price</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {data?.map((product) => (
-              <TableRow key={product.id}>
-                <TableCell>
-                  {product.image_url ? (
-                    <img
-                      src={product.image_url}
-                      alt={product.name}
-                      className="h-16 w-16 object-cover rounded"
-                    />
-                  ) : null}
-                </TableCell>
-                <TableCell className="font-medium">{product.name}</TableCell>
-                <TableCell>{product.description}</TableCell>
-                <TableCell>
-                  {product.price != null ? `$${product.price}` : ""}
-                </TableCell>
-                <TableCell className="text-right space-x-2">
-                  <EditProductDialog product={product} />
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => deleteMutation.mutate(product.id)}
-                  >
-                    Delete
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+    <CrudTable
+      title="Products"
+      isLoading={isLoading}
+      items={data}
+      toolbar={<CreateProductDialog />}
+      headers={["Image", "Name", "Description", "Price", <span className="text-right block" key="actions">Actions</span>]}
+      renderRow={(product: Product) => (
+        <TableRow key={product.id}>
+          <TableCell>
+            {product.image_url ? (
+              <img
+                src={product.image_url}
+                alt={product.name}
+                className="h-16 w-16 object-cover rounded"
+              />
+            ) : null}
+          </TableCell>
+          <TableCell className="font-medium">{product.name}</TableCell>
+          <TableCell>{product.description}</TableCell>
+          <TableCell>
+            {product.price != null ? `$${product.price}` : ""}
+          </TableCell>
+          <TableCell className="text-right space-x-2">
+            <EditProductDialog product={product} />
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => deleteMutation.mutate(product.id)}
+            >
+              Delete
+            </Button>
+          </TableCell>
+        </TableRow>
       )}
-    </div>
+    />
   );
 };
 
@@ -722,70 +699,44 @@ const BlogsManager = () => {
     queryFn: fetchBlogs,
   });
 
-  const queryClient = useQueryClient();
-  const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
+  const deleteMutation = useOptimisticDelete<Blog>({
+    queryKey: ["blogs"],
+    deleteFn: async (id: string) => {
       const { error } = await supabase.from("blogs").delete().eq("id", id);
       if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["blogs"] });
       toast({ title: "Blog post deleted" });
     },
-    onError: (err: unknown) =>
-      toast({
-        title: "Error",
-        description: err instanceof Error ? err.message : String(err),
-        variant: "destructive",
-      }),
   });
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-semibold tracking-tight">Blog Posts</h1>
-        <CreateBlogDialog />
-      </div>
-      {isLoading ? (
-        <p className="text-muted-foreground">Loading...</p>
-      ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Title</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Created At</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {data?.map((blog) => (
-              <TableRow key={blog.id}>
-                <TableCell className="font-medium">{blog.title}</TableCell>
-                <TableCell>
-                  <Badge variant={blog.published ? "default" : "secondary"}>
-                    {blog.published ? "Published" : "Draft"}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  {new Date(blog.created_at).toLocaleDateString()}
-                </TableCell>
-                <TableCell className="text-right space-x-2">
-                  <EditBlogDialog blog={blog} />
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => deleteMutation.mutate(blog.id)}
-                  >
-                    Delete
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+    <CrudTable
+      title="Blog Posts"
+      isLoading={isLoading}
+      items={data}
+      toolbar={<CreateBlogDialog />}
+      headers={["Title", "Status", "Created At", <span className="text-right block" key="actions">Actions</span>]}
+      renderRow={(blog: Blog) => (
+        <TableRow key={blog.id}>
+          <TableCell className="font-medium">{blog.title}</TableCell>
+          <TableCell>
+            <Badge variant={blog.published ? "default" : "secondary"}>
+              {blog.published ? "Published" : "Draft"}
+            </Badge>
+          </TableCell>
+          <TableCell>{new Date(blog.created_at).toLocaleDateString()}</TableCell>
+          <TableCell className="text-right space-x-2">
+            <EditBlogDialog blog={blog} />
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => deleteMutation.mutate(blog.id)}
+            >
+              Delete
+            </Button>
+          </TableCell>
+        </TableRow>
       )}
-    </div>
+    />
   );
 };
 
@@ -1030,68 +981,44 @@ const VideosManager = () => {
     queryFn: fetchVideos,
   });
 
-  const queryClient = useQueryClient();
-  const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
+  const deleteMutation = useOptimisticDelete<Video>({
+    queryKey: ["videos"],
+    deleteFn: async (id: string) => {
       const { error } = await supabase.from("videos").delete().eq("id", id);
       if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["videos"] });
       toast({ title: "Video deleted" });
     },
-    onError: (err: unknown) =>
-      toast({
-        title: "Error",
-        description: err instanceof Error ? err.message : String(err),
-        variant: "destructive",
-      }),
   });
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-semibold tracking-tight">Videos</h1>
-        <CreateVideoDialog />
-      </div>
-      {isLoading ? (
-        <p className="text-muted-foreground">Loading...</p>
-      ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Title</TableHead>
-              <TableHead>URL</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {data?.map((video) => (
-              <TableRow key={video.id}>
-                <TableCell className="font-medium">{video.title}</TableCell>
-                <TableCell><a href={video.url} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">{video.url}</a></TableCell>
-                <TableCell>
-                  <Badge variant={video.published ? "default" : "secondary"}>
-                    {video.published ? "Published" : "Draft"}
-                  </Badge>
-                </TableCell>
-                <TableCell className="text-right space-x-2">
-                  <EditVideoDialog video={video} />
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => deleteMutation.mutate(video.id)}
-                  >
-                    Delete
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+    <CrudTable
+      title="Videos"
+      isLoading={isLoading}
+      items={data}
+      toolbar={<CreateVideoDialog />}
+      headers={["Title", "URL", "Status", <span className="text-right block" key="actions">Actions</span>]}
+      renderRow={(video: Video) => (
+        <TableRow key={video.id}>
+          <TableCell className="font-medium">{video.title}</TableCell>
+          <TableCell><a href={video.url} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">{video.url}</a></TableCell>
+          <TableCell>
+            <Badge variant={video.published ? "default" : "secondary"}>
+              {video.published ? "Published" : "Draft"}
+            </Badge>
+          </TableCell>
+          <TableCell className="text-right space-x-2">
+            <EditVideoDialog video={video} />
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => deleteMutation.mutate(video.id)}
+            >
+              Delete
+            </Button>
+          </TableCell>
+        </TableRow>
       )}
-    </div>
+    />
   );
 };
 
@@ -1198,39 +1125,22 @@ const PagesManager = () => {
   });
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-semibold tracking-tight">Site Pages</h1>
-      </div>
-      {isLoading ? (
-        <p className="text-muted-foreground">Loading...</p>
-      ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Title</TableHead>
-              <TableHead>Slug</TableHead>
-              <TableHead>Last Updated</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {data?.map((page) => (
-              <TableRow key={page.id}>
-                <TableCell className="font-medium">{page.title}</TableCell>
-                <TableCell className="font-mono text-xs">/{page.slug}</TableCell>
-                <TableCell>
-                  {new Date(page.updated_at).toLocaleString()}
-                </TableCell>
-                <TableCell className="text-right space-x-2">
-                  <EditPageDialog page={page} />
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+    <CrudTable
+      title="Site Pages"
+      isLoading={isLoading}
+      items={data}
+      headers={["Title", "Slug", "Last Updated", <span className="text-right block" key="actions">Actions</span>]}
+      renderRow={(page: Page) => (
+        <TableRow key={page.id}>
+          <TableCell className="font-medium">{page.title}</TableCell>
+          <TableCell className="font-mono text-xs">/{page.slug}</TableCell>
+          <TableCell>{new Date(page.updated_at).toLocaleString()}</TableCell>
+          <TableCell className="text-right space-x-2">
+            <EditPageDialog page={page} />
+          </TableCell>
+        </TableRow>
       )}
-    </div>
+    />
   );
 };
 
@@ -1483,64 +1393,40 @@ const FaqsManager = () => {
     queryFn: fetchFaqs,
   });
 
-  const queryClient = useQueryClient();
-  const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
+  const deleteMutation = useOptimisticDelete<Faq>({
+    queryKey: ["faqs"],
+    deleteFn: async (id: string) => {
       const { error } = await supabase.from("faqs").delete().eq("id", id);
       if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["faqs"] });
       toast({ title: "FAQ deleted" });
     },
-    onError: (err: unknown) =>
-      toast({
-        title: "Error",
-        description: err instanceof Error ? err.message : String(err),
-        variant: "destructive",
-      }),
   });
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-semibold tracking-tight">FAQ</h1>
-        <CreateFaqDialog />
-      </div>
-      {isLoading ? (
-        <p className="text-muted-foreground">Loading...</p>
-      ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Order</TableHead>
-              <TableHead>Question</TableHead>
-              <TableHead>Answer</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {data?.map((faq) => (
-              <TableRow key={faq.id}>
-                <TableCell>{faq.display_order}</TableCell>
-                <TableCell className="font-medium">{faq.question}</TableCell>
-                <TableCell>{faq.answer}</TableCell>
-                <TableCell className="text-right space-x-2">
-                  <EditFaqDialog faq={faq} />
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => deleteMutation.mutate(faq.id)}
-                  >
-                    Delete
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+    <CrudTable
+      title="FAQ"
+      isLoading={isLoading}
+      items={data}
+      toolbar={<CreateFaqDialog />}
+      headers={["Order", "Question", "Answer", <span className="text-right block" key="actions">Actions</span>]}
+      renderRow={(faq: Faq) => (
+        <TableRow key={faq.id}>
+          <TableCell>{faq.display_order}</TableCell>
+          <TableCell className="font-medium">{faq.question}</TableCell>
+          <TableCell>{faq.answer}</TableCell>
+          <TableCell className="text-right space-x-2">
+            <EditFaqDialog faq={faq} />
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => deleteMutation.mutate(faq.id)}
+            >
+              Delete
+            </Button>
+          </TableCell>
+        </TableRow>
       )}
-    </div>
+    />
   );
 };
 

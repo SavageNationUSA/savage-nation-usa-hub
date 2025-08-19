@@ -47,6 +47,8 @@ import {
 } from "@/lib/validators";
 import { CrudTable } from "@/components/admin/CrudTable";
 import { useOptimisticDelete } from "@/hooks/useOptimisticDelete";
+import { CrudTable } from "@/components/admin/CrudTable";
+import { useOptimisticDelete } from "@/hooks/useOptimisticDelete";
 
 // Product Types
 type Product = {

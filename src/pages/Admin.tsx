@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { SEO } from "@/components/SEO";
 import { supabase } from "@/integrations/supabase/client";
@@ -36,6 +37,13 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { PageEditor } from "@/components/admin/PageEditor";
+import {
+  productFormSchema,
+  blogFormSchema,
+  videoFormSchema,
+  pageFormSchema,
+  faqFormSchema,
+} from "@/lib/validators";
 
 // Product Types
 type Product = {
@@ -165,6 +173,7 @@ const fetchFaqs = async (): Promise<Faq[]> => {
 const CreateProductDialog = () => {
   const [open, setOpen] = useState(false);
   const form = useForm<ProductFormValues>({
+    resolver: zodResolver(productFormSchema),
     defaultValues: { name: "", description: "", price: "", image: undefined },
   });
   const queryClient = useQueryClient();
@@ -291,6 +300,7 @@ const CreateProductDialog = () => {
 const EditProductDialog = ({ product }: { product: Product }) => {
   const [open, setOpen] = useState(false);
   const form = useForm<ProductFormValues>({
+    resolver: zodResolver(productFormSchema),
     defaultValues: {
       name: product.name ?? "",
       description: product.description ?? "",
@@ -515,6 +525,7 @@ const ProductsManager = () => {
 const CreateBlogDialog = () => {
   const [open, setOpen] = useState(false);
   const form = useForm<BlogFormValues>({
+    resolver: zodResolver(blogFormSchema),
     defaultValues: { title: "", content: "", published: false },
   });
   const queryClient = useQueryClient();
@@ -610,6 +621,7 @@ const CreateBlogDialog = () => {
 const EditBlogDialog = ({ blog }: { blog: Blog }) => {
   const [open, setOpen] = useState(false);
   const form = useForm<BlogFormValues>({
+    resolver: zodResolver(blogFormSchema),
     defaultValues: {
       title: blog.title ?? "",
       content: blog.content ?? "",
@@ -795,6 +807,7 @@ const BlogsManager = () => {
 const CreateVideoDialog = () => {
   const [open, setOpen] = useState(false);
   const form = useForm<VideoFormValues>({
+    resolver: zodResolver(videoFormSchema),
     defaultValues: { title: "", description: "", url: "", published: false },
   });
   const queryClient = useQueryClient();
@@ -903,6 +916,7 @@ const CreateVideoDialog = () => {
 const EditVideoDialog = ({ video }: { video: Video }) => {
   const [open, setOpen] = useState(false);
   const form = useForm<VideoFormValues>({
+    resolver: zodResolver(videoFormSchema),
     defaultValues: {
       title: video.title ?? "",
       description: video.description ?? "",
@@ -1101,6 +1115,7 @@ const VideosManager = () => {
 const EditPageDialog = ({ page }: { page: Page }) => {
   const [open, setOpen] = useState(false);
   const form = useForm<PageFormValues>({
+    resolver: zodResolver(pageFormSchema),
     defaultValues: {
       title: page.title ?? "",
       content: page.content ?? "",
@@ -1292,6 +1307,7 @@ const Admin = () => {
 const CreateFaqDialog = () => {
   const [open, setOpen] = useState(false);
   const form = useForm<FaqFormValues>({
+    resolver: zodResolver(faqFormSchema),
     defaultValues: { question: "", answer: "", display_order: "0" },
   });
   const queryClient = useQueryClient();
@@ -1386,6 +1402,7 @@ const CreateFaqDialog = () => {
 const EditFaqDialog = ({ faq }: { faq: Faq }) => {
   const [open, setOpen] = useState(false);
   const form = useForm<FaqFormValues>({
+    resolver: zodResolver(faqFormSchema),
     defaultValues: {
       question: faq.question ?? "",
       answer: faq.answer ?? "",

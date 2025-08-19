@@ -34,6 +34,9 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { PageEditor } from "@/components/admin/PageEditor";
+import { ToolshedManager } from "@/components/admin/ToolshedManager";
 import { CrudTable } from "@/components/admin/CrudTable";
 import { useOptimisticDelete } from "@/hooks/useOptimisticDelete";
 
@@ -115,6 +118,20 @@ type FaqFormValues = {
   display_order: string;
 };
 
+// Gallery Image Types
+type GalleryImage = {
+  id: string;
+  image_url: string;
+  caption: string | null;
+  created_at: string;
+};
+
+type GalleryImageFormValues = {
+  caption: string;
+  image?: FileList;
+};
+
+
 // Data Fetching
 const fetchProducts = async (): Promise<Product[]> => {
   const { data, error } = await supabase
@@ -159,6 +176,15 @@ const fetchFaqs = async (): Promise<Faq[]> => {
     .order("display_order", { ascending: true });
   if (error) throw error;
   return data as Faq[];
+};
+
+const fetchGalleryImages = async (): Promise<GalleryImage[]> => {
+  const { data, error } = await supabase
+    .from("gallery_images")
+    .select("*")
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return data as GalleryImage[];
 };
 
 // Product Components
@@ -1146,38 +1172,346 @@ const PagesManager = () => {
 
 const Admin = () => {
   return (
-    <>
-      <SEO
-        title="Admin — Savage Nation USA"
-        description="Admin dashboard to manage Savage Nation USA."
-      />
-      <main className="container mx-auto py-12">
-        <Tabs defaultValue="products">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="products">Products</TabsTrigger>
-            <TabsTrigger value="blogs">Blogs</TabsTrigger>
-            <TabsTrigger value="videos">Videos</TabsTrigger>
-            <TabsTrigger value="pages">Pages</TabsTrigger>
-            <TabsTrigger value="faq">FAQ</TabsTrigger>
-          </TabsList>
-          <TabsContent value="products">
-            <ProductsManager />
-          </TabsContent>
-          <TabsContent value="blogs">
-            <BlogsManager />
-          </TabsContent>
-          <TabsContent value="videos">
-            <VideosManager />
-          </TabsContent>
-          <TabsContent value="pages">
-            <PagesManager />
-          </TabsContent>
-          <TabsContent value="faq">
-            <FaqsManager />
-          </TabsContent>
-        </Tabs>
-      </main>
-    </>
+    <ProtectedRoute requireAdmin>
+      <>
+        <SEO
+          title="Admin — Savage Nation USA"
+          description="Admin dashboard to manage Savage Nation USA."
+        />
+        <main className="container mx-auto py-12">
+          <Tabs defaultValue="products">
+            <TabsList className="grid w-full grid-cols-3 lg:grid-cols-9 gap-1">
+              <TabsTrigger value="products">Products</TabsTrigger>
+              <TabsTrigger value="blogs">Blogs</TabsTrigger>
+              <TabsTrigger value="videos">Videos</TabsTrigger>
+              <TabsTrigger value="pages">Pages</TabsTrigger>
+              <TabsTrigger value="faq">FAQ</TabsTrigger>
+              <TabsTrigger value="toolshed">Toolshed</TabsTrigger>
+              <TabsTrigger value="about">About</TabsTrigger>
+              <TabsTrigger value="contact">Contact</TabsTrigger>
+              <TabsTrigger value="gallery">Gallery</TabsTrigger>
+            </TabsList>
+            <TabsContent value="products">
+              <ProductsManager />
+            </TabsContent>
+            <TabsContent value="blogs">
+              <BlogsManager />
+            </TabsContent>
+            <TabsContent value="videos">
+              <VideosManager />
+            </TabsContent>
+            <TabsContent value="pages">
+              <PagesManager />
+            </TabsContent>
+            <TabsContent value="faq">
+              <FaqsManager />
+            </TabsContent>
+            <TabsContent value="toolshed">
+              <ToolshedManager />
+            </TabsContent>
+            <TabsContent value="about">
+              <PageEditor slug="about" title="About Us" />
+            </TabsContent>
+            <TabsContent value="contact">
+              <PageEditor slug="contact" title="Contact Us" />
+            </TabsContent>
+            <TabsContent value="gallery">
+              <GalleryManager />
+            </TabsContent>
+          </Tabs>
+        </main>
+      </>
+    </ProtectedRoute>
+  );
+};
+
+// Gallery Components
+const CreateGalleryImageDialog = () => {
+  const [open, setOpen] = useState(false);
+  const form = useForm<GalleryImageFormValues>({
+    defaultValues: { caption: "", image: undefined },
+  });
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: async (values: GalleryImageFormValues) => {
+      let imageUrl: string | null = null;
+      if (values.image && values.image[0]) {
+        const file = values.image[0];
+        const filePath = `${Date.now()}-${file.name}`;
+        const { error: uploadError } = await supabase.storage
+          .from("gallery-images")
+          .upload(filePath, file);
+        if (uploadError) throw uploadError;
+        const { data: { publicUrl } } = supabase.storage
+          .from("gallery-images")
+          .getPublicUrl(filePath);
+        imageUrl = publicUrl;
+      } else {
+        throw new Error("An image is required.");
+      }
+      const { error } = await supabase.from("gallery_images").insert({
+        caption: values.caption,
+        image_url: imageUrl,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["gallery_images"] });
+      toast({ title: "Image added to gallery" });
+      form.reset();
+      setOpen(false);
+    },
+    onError: (err: unknown) =>
+      toast({
+        title: "Error",
+        description: err instanceof Error ? err.message : String(err),
+        variant: "destructive",
+      }),
+  });
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button>New Image</Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Add Image to Gallery</DialogTitle>
+        </DialogHeader>
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit((v) => mutation.mutate(v))}
+            className="space-y-4"
+          >
+            <FormField
+              control={form.control}
+              name="caption"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Caption</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="image"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Image</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      required
+                      onChange={(e) => field.onChange(e.target.files)}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <DialogFooter>
+              <Button type="submit" disabled={mutation.isPending}>
+                Save
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+const EditGalleryImageDialog = ({ image }: { image: GalleryImage }) => {
+  const [open, setOpen] = useState(false);
+  const form = useForm<GalleryImageFormValues>({
+    defaultValues: {
+      caption: image.caption ?? "",
+      image: undefined,
+    },
+  });
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    form.reset({
+      caption: image.caption ?? "",
+      image: undefined,
+    });
+  }, [image, form]);
+
+  const mutation = useMutation({
+    mutationFn: async (values: GalleryImageFormValues) => {
+      let imageUrl = image.image_url;
+      if (values.image && values.image[0]) {
+        const file = values.image[0];
+        const filePath = `${Date.now()}-${file.name}`;
+        const { error: uploadError } = await supabase.storage
+          .from("gallery-images")
+          .upload(filePath, file);
+        if (uploadError) throw uploadError;
+        const { data: { publicUrl } } = supabase.storage
+          .from("gallery-images")
+          .getPublicUrl(filePath);
+        imageUrl = publicUrl;
+      }
+      const { error } = await supabase
+        .from("gallery_images")
+        .update({
+          caption: values.caption,
+          image_url: imageUrl,
+        })
+        .eq("id", image.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["gallery_images"] });
+      toast({ title: "Image updated" });
+      setOpen(false);
+    },
+    onError: (err: unknown) =>
+      toast({
+        title: "Error",
+        description: err instanceof Error ? err.message : String(err),
+        variant: "destructive",
+      }),
+  });
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm">
+          Edit
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Edit Gallery Image</DialogTitle>
+        </DialogHeader>
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit((v) => mutation.mutate(v))}
+            className="space-y-4"
+          >
+            <FormField
+              control={form.control}
+              name="caption"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Caption</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="image"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>New Image (Optional)</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => field.onChange(e.target.files)}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <DialogFooter>
+              <Button type="submit" disabled={mutation.isPending}>
+                Save
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+
+const GalleryManager = () => {
+  const { data, isLoading } = useQuery({
+    queryKey: ["gallery_images"],
+    queryFn: fetchGalleryImages,
+  });
+
+  const queryClient = useQueryClient();
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("gallery_images").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["gallery_images"] });
+      toast({ title: "Image deleted" });
+    },
+    onError: (err: unknown) =>
+      toast({
+        title: "Error",
+        description: err instanceof Error ? err.message : String(err),
+        variant: "destructive",
+      }),
+  });
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-3xl font-semibold tracking-tight">Gallery</h1>
+        <CreateGalleryImageDialog />
+      </div>
+      {isLoading ? (
+        <p className="text-muted-foreground">Loading...</p>
+      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Image</TableHead>
+              <TableHead>Caption</TableHead>
+              <TableHead>Created At</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {data?.map((image) => (
+              <TableRow key={image.id}>
+                <TableCell>
+                  <img
+                    src={image.image_url}
+                    alt={image.caption || ""}
+                    className="h-16 w-16 object-cover rounded"
+                  />
+                </TableCell>
+                <TableCell>{image.caption}</TableCell>
+                <TableCell>
+                  {new Date(image.created_at).toLocaleDateString()}
+                </TableCell>
+                <TableCell className="text-right space-x-2">
+                  <EditGalleryImageDialog image={image} />
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => deleteMutation.mutate(image.id)}
+                  >
+                    Delete
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      )}
+    </div>
   );
 };
 

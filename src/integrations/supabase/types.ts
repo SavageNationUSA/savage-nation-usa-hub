@@ -68,6 +68,33 @@ export type Database = {
         }
         Relationships: []
       }
+      gallery_images: {
+        Row: {
+          caption: string | null
+          created_at: string
+          display_order: number | null
+          id: string
+          image_url: string
+          updated_at: string
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string
+          display_order?: number | null
+          id?: string
+          image_url: string
+          updated_at?: string
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string
+          display_order?: number | null
+          id?: string
+          image_url?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       pages: {
         Row: {
           content: string | null
@@ -119,6 +146,54 @@ export type Database = {
           image_url?: string | null
           name?: string
           price?: number | null
+        }
+        Relationships: []
+      }
+      toolshed_resources: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          display_order: number | null
+          download_count: number
+          featured: boolean
+          file_url: string | null
+          id: string
+          tags: Json | null
+          title: string
+          type: string
+          updated_at: string
+          url: string | null
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          download_count?: number
+          featured?: boolean
+          file_url?: string | null
+          id?: string
+          tags?: Json | null
+          title: string
+          type: string
+          updated_at?: string
+          url?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          download_count?: number
+          featured?: boolean
+          file_url?: string | null
+          id?: string
+          tags?: Json | null
+          title?: string
+          type?: string
+          updated_at?: string
+          url?: string | null
         }
         Relationships: []
       }
